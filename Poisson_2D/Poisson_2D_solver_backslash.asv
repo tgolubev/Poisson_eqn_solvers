@@ -20,9 +20,8 @@ num_elements = N^2;  %NOTE: this will specify number of elements in the solution
 %will use indexing: i + 1/2 is defined as i+1 for the index
 epsilon = zeros(num_cell+1, num_cell +1);
 %later will fill with real epsilons corresponding to the different layers
-
 %NOTE: these epsilons are only defining the interior points...
-for i = 1:num_cell+1
+for i = 1:num_cell
     epsilon(i,:) = 1;
 end
 

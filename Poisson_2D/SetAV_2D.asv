@@ -24,18 +24,15 @@ end
 %subblocks)
 for index = 1:num_elements-1      %this is the lower diagonal (below main diagonal) (1st element corresponds to 2nd row)
     i = mod(index/N);         %this is x index of V which element corresponds to (note if this = 0, means these are the elements which are 0);
-    j = 1 + floor(index/N);
     if(mod(index, N) == 0)
         AV_val(index,2) = 0;   %these are the elements at subblock corners
     else
-        AV_val(index,2) = -(epsilon(i,j) - epsilon(i-1,j))/2;  
+        AV_val(index,2) = -(epsilon(i,j) - epsilon(;  
     end
 end
 
 for index =  1:num_elements      %main diagonal
-    i = index;
-    j = 1 + floor(index/N);
-    AV_val(index,3) = (epsilon(i,j) - epsilon(i-1,j))/2 + (epsilon(i+1,j) - epsilon(i,j))/2 + (epsilon(i,j+1) - epsilon(i,j))/2 + (epsilon(i,j+1) - epsilon(i,j))/2;
+    AV_val(index,3) = 4.;
 end
 
 for index = 2:num_elements      %main uppper diagonal, matlab fills this from the bottom (so i = 2 corresponds to 1st row in matrix)
