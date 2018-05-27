@@ -18,11 +18,12 @@ num_elements = N^2;  %NOTE: this will specify number of elements in the solution
 %NOTE: epsilons will be defined at 1/2 integer points, so epsilons inside
 %the cells, not at cell boundaries
 %will use indexing: i + 1/2 is defined as i+1 for the index
-epsilon = zeros(num_cell+1, num_cell +1);
+epsilon = zeros(num_cell+2, num_cell +2);
 %later will fill with real epsilons corresponding to the different layers
 
-%NOTE: these epsilons are only defining the interior points...
-for i = 1:num_cell+1
+%NOTE: I unfortunately can't define epsilon(0,..) in matlab, so the endpts
+%are at 1...
+for i = 1:num_cell+2
     epsilon(i,:) = 1;
 end
 
