@@ -36,7 +36,7 @@ num_elements = N^2;  %NOTE: this will specify number of elements in the solution
 
 Va = 1.; %applied voltage
 
-%Matrix of the system's net charge 
+%Matrix of the system's net charge
 %for now make the net charge = 0  --> this will give a linear 2D potential
 %plot
 netcharge = zeros(num_elements,num_elements);
@@ -60,7 +60,7 @@ V_bottomBC = 0;
 V_topBC = Va/Vt;
 
 % Initial conditions
-diff = (V_topBC - V_bottomBC)/num_cell;  
+diff = (V_topBC - V_bottomBC)/num_cell;
 index = 0;
 for j = 1:N  %corresponds to z coord
     index = index +1;
@@ -70,7 +70,7 @@ for j = 1:N  %corresponds to z coord
         V(index) = V(index-1);
     end
 end
-        
+
 %Side BCs will be filled in from V, since are insulating BC's
 %i's in these BC's correspond to the x-value (z values are along a line,
 %top and bottom)
@@ -85,47 +85,49 @@ end
 AV = SetAV_2D(epsilon);
 %spy(AV);  %allows to see matrix structure, very useful!
 
-%set up rhs of Poisson equation
+%set up rhs of Poisson equation. Note for epsilons, are assuming that
+%epsilons at the boundaries are the same as espilon 1 cell into interior of
+%device
 index = 0;
 for j = 1:N
     if(j ==1)  %different for 1st subblock
         for i = 1:N
             index = index +1;
             if (i==1)  %1st element has 2 BC's
-                bV(index,1) = netcharge(i,j) + V_leftBC(1) + V_bottomBC;
+                bV(index,1) = netcharge(i,j) + epsilon(i,j)*(V_leftBC(1) + V_bottomBC);
             elseif (i==N)
-                bV(index,1) = netcharge(i,j) + V_rightBC(1) + V_bottomBC;
+                bV(index,1) = netcharge(i,j) + epsilon(i,j)*(V_rightBC(1) + V_bottomBC);
             else
-                bV(index,1) = netcharge(i,j) + V_bottomBC;
+                bV(index,1) = netcharge(i,j) + epsilon(i,j)*V_bottomBC;
             end
         end
     elseif(j == N)  %different for last subblock
         for i = 1:N
             index = index +1;
             if (i==1)  %1st element has 2 BC's
-                bV(index,1) = netcharge(i,j) + V_leftBC(N) + V_topBC;
+                bV(index,1) = netcharge(i,j) + epsilon(i,j)*(V_leftBC(N) + V_topBC);
             elseif (i==N)
-                bV(index,1) = netcharge(i,j) + V_rightBC(N) + V_topBC;
+                bV(index,1) = netcharge(i,j) + epsilon(i,j)*(V_rightBC(N) + V_topBC);
             else
-                bV(index,1) = netcharge(i,j) + V_topBC;
+                bV(index,1) = netcharge(i,j) + epsilon(i,j)*V_topBC;
             end
         end
     else %interior subblocks
         for i = 1:N
             index = index +1;
             if(i==1)
-                bV(index,1) = netcharge(i,j) + V_leftBC(j);
+                bV(index,1) = netcharge(i,j) + epsilon(i,j)*V_leftBC(j);
             elseif(i==N)
-                bV(index,1) = netcharge(i,j) + V_rightBC(j);
+                bV(index,1) = netcharge(i,j) + epsilon(i,j)*V_rightBC(j);
             else
                 bV(index,1) = netcharge(i,j);
             end
         end
-    end             
+    end
 end
 
 %solve for V
 V = AV\bV
 
 %plot V
-surf(1:N,1:N,reshape(V,N,N))  %need to reshape the vector into a 2D matrix, to make a 2D plot 
+surf(1:N,1:N,reshape(V,N,N))  %need to reshape the vector into a 2D matrix, to make a 2D plot
