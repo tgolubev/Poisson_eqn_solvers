@@ -10,7 +10,7 @@ std::vector<double> set_far_lower_Vdiag(arma::mat &epsilon, std::vector<double> 
         if(i==0) i=N;
         int j = 1+floor((index-1)/N);
 
-        Farlower_diag[index] = -epsilon(i,j) + epsilon(i+1,j)/2.;
+        Farlower_diag[index] = -(epsilon(i,j) + epsilon(i+1,j))/2.;
     }
     return Farlower_diag;
 }
@@ -61,11 +61,10 @@ std::vector<double> set_upper_Vdiag(arma::mat &epsilon, std::vector<double> &upp
         int i = index % N;
         int j = 1 + floor((index-1)/N);
 
-        if(index -1 % N ==0)      // %i-1 b/c indexed from 2
+        if(index  % N ==0)
             upper_diag[index] = 0;
         else
             upper_diag[index] = -(epsilon(i+1,j) + epsilon(i+1,j+1))/2.;
-
    }
 
     return upper_diag;

@@ -1,4 +1,5 @@
-//This is a code for testing tridiagonal matrix solving using Armadillo (linear algebra library)
+//This is a code for solving the 2D Poisson equation with possibly position dependent dielectric
+//constant using Armadillo (linear algebra library)
 
 //June 2018
 //Timofey Golubev
@@ -11,13 +12,10 @@
 
 #include "armadillo.h"  //note: armadillo features are located in namespace arma
 
-// valid indices in a vector fall into the range 0 to vectorSize - 1. So if want to fill from 1 to num_cell, need to make a num_cell + 1 sized vector
 
 int main()
 {
-
     double Va = 1.;
-    const double Vt = 1.;  //NEED TO CHANGE
 
     //arma vectors and matrices fill from 0.
     arma::sp_mat AV(num_elements, num_elements);   //create an armadillo sparse matrix
@@ -56,7 +54,6 @@ int main()
         V[index] = diff*j;
         for (int i = 2;i<=N;i++){//  %elements along the x direction assumed to have same V
             index++;
-            std::cout << index <<std::endl;
             V[index] = V[index-1];
         }
     }
@@ -70,9 +67,7 @@ int main()
         V_rightBC[i] = V[i*N];
     }
 
-
-
-    //Set up matrix equation   //THIS NEEDS TO BE MODIFIED...
+    //Set up matrix equation
     main_diag = set_main_Vdiag(epsilon, main_diag);
     upper_diag = set_upper_Vdiag(epsilon, upper_diag);
     lower_diag = set_lower_Vdiag(epsilon, lower_diag);
@@ -85,32 +80,32 @@ int main()
         if(j==1){
             for(int i = 1;i<=N;i++){
                 index2++;                //THIS COULD BE MODIFIES TO a switch ,case statement--> might be cleaner
-                if(i==1)
-                    rhs[index] = netcharge(i,j) + epsilon(i,j)*(V_leftBC[1] + V_bottomBC);
-                else if(i == N)
-                    rhs[index] = netcharge(i,j) + epsilon(i,j)*(V_rightBC[1] + V_bottomBC);
+                if(i==1){
+                    rhs[index2] = netcharge(i,j) + epsilon(i,j)*(V_leftBC[1] + V_bottomBC);
+                }else if(i == N)
+                    rhs[index2] = netcharge(i,j) + epsilon(i,j)*(V_rightBC[1] + V_bottomBC);
                 else
-                    rhs[index] = netcharge(i,j) + epsilon(i,j)*V_bottomBC;
+                    rhs[index2] = netcharge(i,j) + epsilon(i,j)*V_bottomBC;
             }
         }else if(j==N){
             for(int i = 1; i<=N;i++){
                 index2++;
                 if(i==1)
-                    rhs[index] = netcharge(i,j) + epsilon(i,j)*(V_leftBC[N] + V_topBC);
+                    rhs[index2] = netcharge(i,j) + epsilon(i,j)*(V_leftBC[N] + V_topBC);
                 else if(i == N)
-                    rhs[index] = netcharge(i,j) + epsilon(i,j)*(V_rightBC[N] + V_topBC);
+                    rhs[index2] = netcharge(i,j) + epsilon(i,j)*(V_rightBC[N] + V_topBC);
                 else
-                    rhs[index] = netcharge(i,j) + epsilon(i,j)*V_topBC;
+                    rhs[index2] = netcharge(i,j) + epsilon(i,j)*V_topBC;
             }
         }else{
             for(int i = 1;i<=N;i++){
                 index2++;
                 if(i==1)
-                    rhs[index] = netcharge(i,j) + epsilon(i,j)*V_leftBC[j];
+                    rhs[index2] = netcharge(i,j) + epsilon(i,j)*V_leftBC[j];
                 else if(i == N)
-                    rhs[index] = netcharge(i,j) + epsilon(i,j)*V_rightBC[j];
+                    rhs[index2] = netcharge(i,j) + epsilon(i,j)*V_rightBC[j];
                 else
-                    rhs[index] = netcharge(i,j);
+                    rhs[index2] = netcharge(i,j);
             }
         }
     }
@@ -122,6 +117,7 @@ int main()
         vec_main_diag(i-1) = main_diag[i];
         vec_rhs(i-1) = rhs[i];
     }
+    std::cout << vec_rhs <<std::endl;
     for(int i = 1;i< upper_diag.size();i++){
         vec_upper_diag(i-1) = upper_diag[i];
         vec_lower_diag(i-1) = lower_diag[i];
@@ -149,18 +145,8 @@ int main()
 
     vec_V = spsolve(AV, vec_rhs, "lapack");
 
-    //V = TriCRSSolver(a, b, c, rhs);
-    //V = Thomas_solve(a, b, c, rhs);
-
     //output the result to terminal
     std:: cout << "solution " << vec_V << std::endl;
-
-    //this loop for cout, only works for std::vector. It crashes for arma vectors
-    /*
-    for(int i = 0;i<= num_cell-2; i++){
-        std::cout << V[i] << " " <<std::endl;
-    }
-    */
 
 
     return 0;
