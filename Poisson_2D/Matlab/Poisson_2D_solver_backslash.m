@@ -67,6 +67,7 @@ for j = 1:N  %corresponds to z coord
     V(index) = diff*j;
     for i = 2:N  %elements along the x direction assumed to have same V
         index = index +1;
+        
         V(index) = V(index-1);
     end
 end
