@@ -15,7 +15,7 @@
 
 int main()
 {
-    const int num_elements = 100;  //number of nodes in the system
+    const int num_elements = 99;  //number of nodes in the system
     std::vector<double> epsilon(num_elements+2);
     std::vector<double> a (num_elements+1);//main diag
     std::vector<double> b(num_elements); //upper diag, size can be = num_elements b/c off-diags are 1 element less than  main diag
