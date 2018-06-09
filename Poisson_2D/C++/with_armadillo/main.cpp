@@ -7,6 +7,8 @@
 #include <iostream>
 #include "Set_2DAV_diags.h"
 #include <vector>
+#include <chrono>
+#include <time.h>
 
 #include "parameters.h"
 
@@ -15,6 +17,9 @@
 
 int main()
 {
+
+    std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();  //start clock timer
+
     double Va = 1.;
 
     //arma vectors and matrices fill from 0.
@@ -117,7 +122,7 @@ int main()
         vec_main_diag(i-1) = main_diag[i];
         vec_rhs(i-1) = rhs[i];
     }
-    std::cout << vec_rhs <<std::endl;
+    //std::cout << vec_rhs <<std::endl;
     for(int i = 1;i< upper_diag.size();i++){
         vec_upper_diag(i-1) = upper_diag[i];
         vec_lower_diag(i-1) = lower_diag[i];
@@ -137,7 +142,7 @@ int main()
     AV.diag(N) = vec_far_upper_diag;
     AV.diag(-N) = vec_far_lower_diag;
 
-    std::cout << AV << std::endl;  //armadillo has overloaded << to output matrices
+    //std::cout << AV << std::endl;  //armadillo has overloaded << to output matrices
     //std::cout<< vec_a << std::endl;
     //std::cout<< vec_b << std::endl;
     //std::cout<< vec_c << std::endl;
@@ -147,6 +152,10 @@ int main()
 
     //output the result to terminal
     std:: cout << "solution " << vec_V << std::endl;
+
+    std::chrono::high_resolution_clock::time_point finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> time = std::chrono::duration_cast<std::chrono::duration<double>>(finish-start);
+    std::cout << "1 Va CPU time = " << time.count() << std::endl;
 
 
     return 0;

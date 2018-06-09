@@ -22,7 +22,7 @@ global num_cell N num_elements
 %% Physical Constants
 q =  1.60217646*10^-19;         %elementary charge, C
 kb = 1.3806503*10^-23;          %Boltzmann const., J/k
-T = 296.;                      %temperature:  Koster says they use room temperature...: I find that btw. 293 and 300 get no effect on JV curve...
+T = 296.;                      %temperature
 epsilon_0 =  8.85418782*10^-12; %F/m
 Vt = (kb*T)/q;
 
