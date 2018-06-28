@@ -1,13 +1,16 @@
-% Testing 2D Poisson setup and solve
+% Testing 3D Poisson setup and solve
 
-%Sets up the matrix equation for solving 2D Poisson equation with optional space
+%Sets up the matrix equation for solving 3D Poisson equation with optional space
 %varying dielectric constants. Boundary conditions are:
 
-%-a fixed voltage at (x,0) and (x, Nz) defined by V_bottomBC and V_topBC
+%-a fixed voltage at (x,y, 0) and (x, y, Nz) defined by V_bottomBC and V_topBC
 %which are defining the  electrodes
 
-%-insulating boundary conditions: V(0,z) = V(1,z) and V(0,N+1) = V(1,N) (N
-%is the last INTERIOR mesh point.
+%-insulating boundary conditions: V(0, y, z) = V(1, y, z) and V(x, 0, z) =  V(x, 1, z) 
+%                                 V(N+1, y, z) = V(N, y, z) and V(x, N+1,
+%                                 z) = V(x, N, z)
+
+%N is the last INTERIOR mesh point.
 %so the potential at the boundary is assumed to be the same as just inside
 %the boundary. Gradient of potential normal to these boundaries is 0.
 
@@ -29,8 +32,8 @@ Vt = (kb*T)/q;
 %% System Setup
 tic
 
-num_cell = 1001;
-N = num_cell -1;   %number of INTERIOR mesh points
+num_cell = 4;
+N = num_cell -1;   %number of INTERIOR mesh points. (note: total # of mesh pts is N+1)
 num_elements = N^2;  %NOTE: this will specify number of elements in the solution vector V which = (num_cell +1 -2)^2 b/c we are in 2D
 %(num_cell +1) = # of mesh pts, b/c matlab starts indexing from 1, then -2
 %the endpts
@@ -38,27 +41,25 @@ num_elements = N^2;  %NOTE: this will specify number of elements in the solution
 Va = 1.; %applied voltage
 
 %Matrix of the system's net charge
-%for now make the net charge = 0  --> this will give a linear 2D potential
+%for now make the net charge = 0  --> this will give a linear 3D potential
 %plot
-netcharge = zeros(num_cell+2,num_cell+2);
+netcharge = zeros(num_cell+2, num_cell+2, num_cell+2);  %matlab allows 3D matrices
 %netcharge = ones(num_elements,num_elements);  %this will make a slightly curved 2D potential plot
 
 %% Define dielectric constant matrix
 %NOTE: epsilons will be defined at 1/2 integer points, so epsilons inside
 %the cells, not at cell boundaries
 %will use indexing: i + 1/2 is defined as i+1 for the index
-epsilon = zeros(num_cell+2, num_cell +2);
+epsilon = ones(num_cell+2, num_cell+2, num_cell+2); 
 %later will fill with real epsilons corresponding to the different layers
 
 %NOTE: I unfortunately can't define epsilon(0,..) in matlab, so the endpts
 %are at 1...
-for i = 1:num_cell+2
-    epsilon(i,:) = 1;
-end
+
 
 %% Define boundary conditions and initial conditions
-V_bottomBC = 0;
-V_topBC = Va/Vt;
+V_bottomBC = 0;  %z = 0
+V_topBC = Va/Vt; % z = N+1
 
 % Initial conditions
 diff = (V_topBC - V_bottomBC)/num_cell;
@@ -77,14 +78,30 @@ end
 %i's in these BC's correspond to the x-value (z values are along a line,
 %top and bottom)
 %THESE NEED TO BE UPDATED AT EVERY ITERATION OF POISSON SOLVE
-for i = 1:N
-    V_leftBC(i) = V((i-1)*N + 1);  %just corresponds to values of V in the 1st subblock
-    V_rightBC(i) = V(i*N);
+%side BC's are now matrices (2D)
+index = 0;
+for k = 1:N
+    for j = 1:N  %1st vertical subblock set--> the j's iterate
+        V_leftBC_x(j, k) = V(index + (j-1)*N + 1);  %just corresponds to values of V in the 1st subblock
+        V_rightBC_x(j, k) = V(index + j*N);
+    end
+    index = index+N*N;  %brings us to next vertical subblock set
+end
+
+%y bc's taken from beginning and end subblocks of each vertical subblock
+%set
+index = 0;
+for k = 1:N
+    for i =  1:N  %
+        V_leftBC_y(i, k) = V(index + i);  
+        V_rightBC_y(i, k) = V(index + i + N*N - N);
+    end
+    index = index + N*N;
 end
 
 
 %% Set up matrix equation and solve
-AV = SetAV_2D(epsilon);
+AV = SetAV_3D(epsilon);
 %spy(AV);  %allows to see matrix structure, very useful!
 
 %set up rhs of Poisson equation. Note for epsilons, are assuming that
@@ -98,7 +115,7 @@ for j = 1:N
             if (i==1)  %1st element has 2 BC's
                 bV(index,1) = netcharge(i+1,j+1) + epsilon(i+1,j+1)*(V_leftBC(1) + V_bottomBC);  %+1 b/c netcharge and epsilon include endpoints but i,j index only the interior
             elseif (i==N)
-                bV(index,1) = netcharge(i+1,j+1) + epsilon(+1,j+1)*(V_rightBC(1) + V_bottomBC);
+                bV(index,1) = netcharge(i+1,j+1) + epsilon(+1,j+1)*(V_rightBC_x(1) + V_bottomBC);
             else
                 bV(index,1) = netcharge(i+1,j+1) + epsilon(i+1,j+1)*V_bottomBC;
             end
@@ -109,7 +126,7 @@ for j = 1:N
             if (i==1)  %1st element has 2 BC's
                 bV(index,1) = netcharge(i+1,j+1) + epsilon(i+1,j+1)*(V_leftBC(N) + V_topBC);
             elseif (i==N)
-                bV(index,1) = netcharge(i+1,j+1) + epsilon(i+1,j+1)*(V_rightBC(N) + V_topBC);
+                bV(index,1) = netcharge(i+1,j+1) + epsilon(i+1,j+1)*(V_rightBC_x(N) + V_topBC);
             else
                 bV(index,1) = netcharge(i+1,j+1) + epsilon(i+1,j+1)*V_topBC;
             end
@@ -120,7 +137,7 @@ for j = 1:N
             if(i==1)
                 bV(index,1) = netcharge(i+1,j+1) + epsilon(i+1,j+1)*V_leftBC(j);
             elseif(i==N)
-                bV(index,1) = netcharge(i+1,j+1) + epsilon(i+1,j+1)*V_rightBC(j);
+                bV(index,1) = netcharge(i+1,j+1) + epsilon(i+1,j+1)*V_rightBC_x(j);
             else
                 bV(index,1) = netcharge(i+1,j+1);
             end

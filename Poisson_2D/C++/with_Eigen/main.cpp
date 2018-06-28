@@ -2,6 +2,12 @@
 #include <vector>
 #include <Eigen/Dense>
 #include<Eigen/IterativeLinearSolvers>
+#include <Eigen/SparseCholesky>
+#include<Eigen/SparseQR>
+#include <Eigen/OrderingMethods>
+
+
+
 #include <chrono>
 #include <time.h>
 
@@ -13,6 +19,7 @@ using Eigen::MatrixXd;
 using Eigen::SparseMatrix;
 using Eigen::BiCGSTAB;
 using Eigen::MatrixXd;
+using Eigen::SimplicialCholeskyLDLT;
 
 
 typedef Eigen::Triplet<double> Trp;  //TrpripleTrps are objecTrp s of form: row index, column index, value.  used to fill sparse matrices
@@ -24,8 +31,9 @@ int main()
 
     VectorXd x(num_elements), b(num_elements);
     SparseMatrix<double> A(num_elements,num_elements);
-    MatrixXd epsilon = MatrixXd::Ones(num_elements+2,num_elements+2);  //make matrix of ones
-    MatrixXd netcharge = MatrixXd::Zero(num_elements+2,num_elements+2);  //make matrix of zeroes
+    //The creation of these 2 matrices is super slow!So
+    MatrixXd epsilon = MatrixXd::Ones(num_cell+1,num_cell+1);  //NOTE: this is num_cell+1*num_cell+1 (NOT num_elements^2), 1 element per each physical grid pt. make matrix of ones
+    MatrixXd netcharge = MatrixXd::Zero(num_cell+1,num_cell+1);  //make matrix of zeroes
 
     std::vector<double> main_diag (num_elements+1);
     std::vector<double> upper_diag(num_elements);
@@ -71,6 +79,7 @@ int main()
     far_upper_diag = set_far_upper_Vdiag(epsilon, far_upper_diag);
     far_lower_diag = set_far_lower_Vdiag(epsilon, far_lower_diag);
 
+
     //setup rhs of Poisson eqn.
     int index2 = 0;
     for(int j = 1;j<=N;j++){
@@ -108,32 +117,84 @@ int main()
     }
 
    //setup the triplet list for sparse matrix
-    std::vector<Trp> triplet_list;            // list of non-zeros coefficients in triplet form(row index, column index, value)
+   
+    std::vector<Trp> triplet_list(5*num_elements);   //approximate the size that need         // list of non-zeros coefficients in triplet form(row index, column index, value)
+    int trp_cnt = 0;
     for(int i = 1; i< main_diag.size(); i++){
         b(i-1) = rhs[i];   //fill VectorXd  rhs of the equation
-        triplet_list.push_back(Trp(i-1,i-1,main_diag[i]));;   //triplets for main diag
+          triplet_list[trp_cnt] = {i-1, i-1, main_diag[i]};
+          trp_cnt++;
+        //triplet_list.push_back(Trp(i-1,i-1,main_diag[i]));;   //triplets for main diag
     }
     for(int i = 1;i< upper_diag.size();i++){
-         triplet_list.push_back(Trp(i-1, i, upper_diag[i]));  //triplets for upper diagonal
+        triplet_list[trp_cnt] = {i-1, i, upper_diag[i]};
+        trp_cnt++;
+        //triplet_list.push_back(Trp(i-1, i, upper_diag[i]));  //triplets for upper diagonal
      }
      for(int i = 1;i< lower_diag.size();i++){
-        triplet_list.push_back(Trp(i, i-1, lower_diag[i]));
+         triplet_list[trp_cnt] = {i, i-1, lower_diag[i]};
+         trp_cnt++;
+        // triplet_list.push_back(Trp(i, i-1, lower_diag[i]));
      }
      for(int i = 1;i< far_upper_diag.size();i++){
-         triplet_list.push_back(Trp(i-1, i-1+N, far_upper_diag[i]));
-         triplet_list.push_back(Trp(i-1+N, i-1, far_lower_diag[i]));
+         triplet_list[trp_cnt] = {i-1, i-1+N, far_upper_diag[i]};
+         trp_cnt++;
+         //triplet_list.push_back(Trp(i-1, i-1+N, far_upper_diag[i]));
+         triplet_list[trp_cnt] = {i-1+N, i-1, far_lower_diag[i]};
+         trp_cnt++;
+         //triplet_list.push_back(Trp(i-1+N, i-1, far_lower_diag[i]));
       }
 
 
     A.setFromTriplets(triplet_list.begin(), triplet_list.end());    //A is our sparse matrix
 
-    BiCGSTAB<SparseMatrix<double> > solver;  //BiCGStab solver object
+    //using conjugate gradient--> this is faster than BiCGSTAB
+/*
+    Eigen::ConjugateGradient<SparseMatrix<double>, Eigen::UpLoType::Lower|Eigen::UpLoType::Upper > cg;
+    cg.compute(A);
+   x = cg.solve(b);
+    std::cout << "#iterations:     " << cg.iterations() << std::endl;
+     std::cout << "estimated error: " << cg.error()      << std::endl;
+
+*/
+
+  /*  //using sparse LU
+     Eigen::SparseLU<SparseMatrix<double>>  sLU;
+    sLU.analyzePattern(A);
+    sLU.factorize(A);
+    x = sLU.solve(b);
+    */
+
+   //using Sparse Cholesky  (THIS SEEMS TO BE THE FASTEST for the 2D Poisson problem)
+    Eigen::SimplicialLDLT<SparseMatrix<double>, Eigen::UpLoType::Lower, Eigen::AMDOrdering<int>> SCholesky; //Note using NaturalOrdering is much much slower
+    SCholesky.analyzePattern(A);
+    SCholesky.factorize(A);
+    x = SCholesky.solve(b);
+
+
+    //NOTE, for repeat solves, I might not need to keep factorizing! Can just subtitute in the new rhs every time, and use solve()
+
+
+
+    /*
+    //using SparseQR  (is very slow, compared to others for large matrices).
+    Eigen::SparseQR<SparseMatrix<double>, Eigen::COLAMDOrdering<int>> SQR;  //NOTE: this ordering parameter is needed for this to work
+    SQR.analyzePattern(A);
+    SQR.factorize(A);
+    x = SQR.solve(b);
+    */
+
+    //using BiCGSTAB: this is probably useful for non-symmetric matrices, i.e. not Poisson equation which is symmetric. In that case, Cholesky might not work.
+
+    BiCGSTAB<SparseMatrix<double>, Eigen::IncompleteLUT<double>> solver;  //BiCGStab solver object
     solver.compute(A);  //this computes the preconditioner
     x = solver.solve(b);
     std::cout << "#iterations:     " << solver.iterations() << std::endl;
     std::cout << "estimated error: " << solver.error()      << std::endl;
 
+
     std::cout << x <<std::endl;  //they have an overloaded << for seeing result!
+
 
     std::chrono::high_resolution_clock::time_point finish = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time = std::chrono::duration_cast<std::chrono::duration<double>>(finish-start);

@@ -133,9 +133,12 @@ int main()
         vec_far_lower_diag(i-1) = far_lower_diag[i];
     }
 
+    //IS VERY FAST UP TO HERE, EVEN FOR LARGE MATRICES
+
 
     //fill the diagonals of AV using .diag(k). Argument specifies the diagonal (k>0 are upper diags, and k<0 are lower diags).
     //Note: rhs must  be an arma vec for diag to work.
+    //This filling of the diagonals takes very long for large matrices
     AV.diag(0) = vec_main_diag;
     AV.diag(1) = vec_upper_diag;
     AV.diag(-1) = vec_lower_diag;
