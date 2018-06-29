@@ -32,7 +32,7 @@ end
 i = 1;
 j = 1;
 k = 1;
-for index = 1:N^3 - N^2       
+for index = 1:N^3 - N       
     if (j > 0)
         AV_val(index,2) = -(epsilon(i+1,j+1, k+1) + epsilon(i+1+1, j+1, k+1) + epsilon(i+1, j+1+1, k+1) + epsilon(i+1+1, j+1+1, k+1))/4.;
     end
@@ -42,7 +42,7 @@ for index = 1:N^3 - N^2
         i = 1;  %reset i when reach end of subblock
         j = j+1;
     end
-    if (j > N)
+    if (j > N-1)  %note: there's no j=N terms in lower diag
         j = 0;
         k = k+1;
     end
@@ -53,13 +53,13 @@ end
 i = 1;
 j = 1;
 k = 1;
-for index = 1:N^3 - N^2
+for index = 1:N^3 - 1
     if (i > 0)
-        AV_val(index,3) =  - (epsilon(i+1, j+1, k+1) + epsilon(i+1, j+1+1, k+1) + epsilon(i+1, j+1, k+1+1) + epsilon(i+1, j+1+1, k+1+1))/4.
+        AV_val(index,3) =  - (epsilon(i+1, j+1, k+1) + epsilon(i+1, j+1+1, k+1) + epsilon(i+1, j+1, k+1+1) + epsilon(i+1, j+1+1, k+1+1))/4.;
     end
     
     i = i+1;
-    if (i > N)
+    if (i > N-1)  %note: there's no i = N terms here
         i = 0;  %reset i when reach end of subblock
         j = j+1;
     end
@@ -74,12 +74,12 @@ end
 i = 1;
 j = 1;
 k = 1;
-for index =  1:num_elements      %CHECK HOW TO WRAP EQUATION--> THIS SEEMS NOT TO WORK    
-    AV_val(index,4) = ((epsilon(i+1,j+1, k+1) + epsilon(i+1+1, j+1, k+1) + epsilon(i+1, j+1+1, k+1) + epsilon(i+1+1, j+1+1, k+1))/4.
-                    + (epsilon(i+1,j+1, k+1) + epsilon(i+1+1, j+1, k+1) + epsilon(i+1, j+1+1, k+1) + epsilon(i+1+1, j+1+1, k+1))/4.
-                    + (epsilon(i+1, j+1, k+1) + epsilon(i+1, j+1+1, k+1) + epsilon(i+1, j+1, k+1+1) + epsilon(i+1, j+1+1, k+1+1))/4.
-                    + (epsilon(i+1+1,j+1, k+1) + epsilon(i+1+1,j+1+1, k+1) + epsilon(i+1+1, j+1, k+1+1) + epsilon(i+1+1, j+1+1, k+1+1))/4.
-                    + (epsilon(i+1, j+1+1, k+1) + epsilon(i+1+1, j+1+1, k+1) + epsilon(i+1, j+1+1, k+1+1) + epsilon(i+1+1, j+1+1, k+1+1))/4.
+for index =  1:num_elements      
+    AV_val(index,4) = ((epsilon(i+1,j+1, k+1) + epsilon(i+1+1, j+1, k+1) + epsilon(i+1, j+1+1, k+1) + epsilon(i+1+1, j+1+1, k+1))/4. ...  %... to wrap code
+                    + (epsilon(i+1,j+1, k+1) + epsilon(i+1+1, j+1, k+1) + epsilon(i+1, j+1+1, k+1) + epsilon(i+1+1, j+1+1, k+1))/4. ...
+                    + (epsilon(i+1, j+1, k+1) + epsilon(i+1, j+1+1, k+1) + epsilon(i+1, j+1, k+1+1) + epsilon(i+1, j+1+1, k+1+1))/4. ...
+                    + (epsilon(i+1+1,j+1, k+1) + epsilon(i+1+1,j+1+1, k+1) + epsilon(i+1+1, j+1, k+1+1) + epsilon(i+1+1, j+1+1, k+1+1))/4. ...
+                    + (epsilon(i+1, j+1+1, k+1) + epsilon(i+1+1, j+1+1, k+1) + epsilon(i+1, j+1+1, k+1+1) + epsilon(i+1+1, j+1+1, k+1+1))/4. ...
                     + (epsilon(i+1,j+1, k+1+1) + epsilon(i+1+1,j+1, k+1+1) +  epsilon(i+1, j+1+1, k+1+1) + epsilon(i+1+1, j+1+1, k+1+1))/4.);
 end
 %--------------------------------------------------------------------------
@@ -87,13 +87,13 @@ end
 i = 2;
 j = 1;
 k = 1;
-for index = 2:N^3 - N^2 +1     % matlab fills this from the bottom (so i = 2 corresponds to 1st row in matrix)
+for index = 2:N^3 - 1 +1     % matlab fills this from the bottom (so i = 2 corresponds to 1st row in matrix)
    if (i > 1)
         AV_val(index,5) = -(epsilon(i+1+1,j+1, k+1) + epsilon(i+1+1,j+1+1, k+1) + epsilon(i+1+1, j+1, k+1+1) + epsilon(i+1+1, j+1+1, k+1+1))/4.;
    end
    
    i = i+1;
-   if (i > N-1)  %i = N don't have an upper diag value
+   if (i > N)  
        i = 1;
        j = j+1;
    end
@@ -108,7 +108,7 @@ end
 i = 1;
 j = 2;
 k = 1;
-for index = 1+N:N^3 - N^2+N  %matlab fills this from bottom... (in cpp will just start from 1)
+for index = 1+N:N^3 - N +N  %matlab fills this from bottom... (in cpp will just start from 1)
     if (j > 1)
         AV_val(index, 6) = -(epsilon(i+1, j+1+1, k+1) + epsilon(i+1+1, j+1+1, k+1) + epsilon(i+1, j+1+1, k+1+1) + epsilon(i+1+1, j+1+1, k+1+1))/4.;
     end
@@ -118,7 +118,7 @@ for index = 1+N:N^3 - N^2+N  %matlab fills this from bottom... (in cpp will just
         i = 1;
         j = j+1;
      end
-     if (j > N-1)
+     if (j > N)
         j = 1;
         k = k+1;
      end
@@ -146,8 +146,8 @@ end
 
 %all not specified elements will remain zero, as they were initialized
 %above.
+AV_val
 
-AV = spdiags(AV_val, [-N -1 0 1 N], num_elements, num_elements); %A = spdiags(B,d,m,n) creates an m-by-n sparse matrix by taking the columns of B and placing them along the diagonals specified by d.
-%diagonals  [-N -1 0 1 N].  -N and N b/c the far diagonals are in next
-%subblocks, N diagonals away from main diag.
+AV = spdiags(AV_val, [-N^2 -N -1 0 1 N N^2], num_elements, num_elements); %A = spdiags(B,d,m,n) creates an m-by-n sparse matrix by taking the columns of B and placing them along the diagonals specified by d.
+
 
