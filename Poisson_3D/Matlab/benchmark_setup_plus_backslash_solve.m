@@ -11,11 +11,11 @@
 
 %This makes nice plots!
 
-n = 9;
+n = 3;
 h = 1;
 %h = 1/(n+1);  %original version
 % x = h:h:1-h;  %orig version-->  they scaled so range of x is btw. 0 and 1
-x = 1:9;
+x = 1:3;
 
 clf
 K1D = spdiags(ones(n,1)*[-1 2 -1],-1:1,n,n);  % 1d Poisson matrix
@@ -35,11 +35,11 @@ subplot(2,3,1), plot(x,u1D,'.-')
 title('1d poisson equation')
 
 f2D = h^2*ones(n^2,1);                        % 2d right hand side
-u2D = K2D\f2D
+u2D = K2D\f2D;
 subplot(2,3,2), surf(x,x,reshape(u2D,n,n))
 title('2d poisson equation')
 
 f3D = h^2*ones(n^3,1);                        % 3d right hand side
-u3D = K3D\f3D;
+u3D = K3D\f3D
 subplot(2,3,3), slice(x,x,x,reshape(u3D,n,n,n),[1 2]/3,.5,.5)
 title('3d poisson equation')

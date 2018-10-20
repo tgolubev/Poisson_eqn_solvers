@@ -9,13 +9,14 @@
 #include "Set_AV_diags.h"
 #include <vector>
 #include "thomas_tridiag_solve.h"
+#include <chrono>
 
 // valid indices in a vector fall into the range 0 to vectorSize - 1. So if want to fill from 1 to num_elements, need to make a num_elements + 1 sized vector
 
 
 int main()
 {
-    const int num_elements = 99;  //number of nodes in the system
+    const int num_elements = 9999;  //number of nodes in the system
     std::vector<double> epsilon(num_elements+2);
     std::vector<double> a (num_elements+1);//main diag
     std::vector<double> b(num_elements); //upper diag, size can be = num_elements b/c off-diags are 1 element less than  main diag
@@ -29,6 +30,8 @@ int main()
     for(int i=0;i<=num_elements+1;i++){
         epsilon[i] = 3.8;
     }
+
+    std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();  //start clock timer
 
     a = set_main_Vdiag(epsilon, a);
     b = set_upper_Vdiag(epsilon, b);
@@ -50,11 +53,16 @@ int main()
     //V = TriCRSSolver(a, b, c, rhs);
      V = Thomas_solve(a, b, c, rhs);
 
+    std::chrono::high_resolution_clock::time_point finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> time = std::chrono::duration_cast<std::chrono::duration<double>>(finish-start);
+
     //output the result to terminal
 
     for(int i = 1;i<= num_elements; i++){
         std::cout << V[i] << " " <<std::endl;
     }
+
+    std::cout << "Total CPU time = " << time.count() << std::endl;
 
 
     return 0;

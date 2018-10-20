@@ -224,15 +224,10 @@ for k = 1:N
         end
     end
 end
-        
-                
-          
-
+                                
 %solve for V
-%spparms('spumoni',2)
-V = AV\bV;
+% spparms('spumoni',2)
+V = AV\bV;  %Matlab uses Cholesky for this... --> but that will not work for continuity equation.
 
 toc
 
-%plot V
-% surf(1:N,1:N,reshape(V,N,N))  %need to reshape the vector into a 2D matrix, to make a 2D plot
